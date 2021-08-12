@@ -16,8 +16,8 @@ class CreateBlackListsTable extends Migration
         Schema::create('black_lists', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('advertiser_id');
-            $table->unsignedBigInteger('publisher_id');
-            $table->unsignedBigInteger('site_id');
+            $table->unsignedBigInteger('publisher_id')->nullable();
+            $table->unsignedBigInteger('site_id')->nullable();
             $table->timestamps();
         });
     }
