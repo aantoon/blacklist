@@ -41,14 +41,16 @@ class BlackList extends Model
                 ];
 
                 $name = self::getNameByPrefix($matches[1]);
+                $class = "App\Models\\{$name}";
+
                 $id = $matches[2];
 
                 // у каждой сущности должен быть класс
-                if(!class_exists("App\Models\\{$name}"))
+                if(!class_exists($class))
                     throw new \Exception("Class {$name} is not defined");
 
                 // ищем запись по айдишнику
-                if(!$name::find($id))
+                if(!$class::find($id))
                     throw new \Exception("{$name} not found");
 
                 $blacklist_insert[$key][self::getColumnByName($name)] = $id;
