@@ -8,4 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class BlackList extends Model
 {
     use HasFactory;
+
+    public function save(string $black_list, int $advertiser_id) {
+        
+    }
 }
