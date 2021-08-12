@@ -17,4 +17,5 @@ use App\Http\Controllers\BlackListController;
 Route::group(['as' => 'blacklist.'], function() {
     Route::get('/', [BlackListController::class, 'addingForm'])->name('form');
     Route::post('/blacklist/store', [BlackListController::class, 'store'])->name('store');
+    Route::get('/example', [BlackListController::class, 'example'])->name('example');
 });
