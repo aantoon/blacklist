@@ -10,8 +10,8 @@ class BlackList extends Model
 {
     use HasFactory;
     private static $prefixes = [
-        's' => 'site',
-        'p' => 'publisher'
+        's' => 'Site',
+        'p' => 'Publisher'
     ];
 
 
@@ -43,14 +43,15 @@ class BlackList extends Model
                 $name = self::getNameByPrefix($matches[1]);
                 $id = $matches[2];
 
-                if(!class_exists($name))
+                // у каждой сущности должен быть класс
+                if(!class_exists("App\Models\\{$name}"))
                     throw new \Exception("Class {$name} is not defined");
 
                 // ищем запись по айдишнику
                 if(!$name::find($id))
                     throw new \Exception("{$name} not found");
 
-                $blacklist_insert[$key]["{$name}_id"] = $id;
+                $blacklist_insert[$key][self::getColumnByName($name)] = $id;
             }
             else
                 throw new \Exception('Blacklist is not valid');
@@ -74,7 +75,7 @@ class BlackList extends Model
                 // обходим каждую доступную сущность
                 foreach(self::$prefixes as $prefix => $name) {
                     // ищем к какой сущности относится запись
-                    if($id = ($blacklist["{$name}_id"])) {
+                    if($id = ($blacklist[self::getColumnByName($name)])) {
                         // добавляем в массив
                         $blacklist_array[] = "{$prefix}{$id}";
                     }
@@ -99,5 +100,9 @@ class BlackList extends Model
             return self::$prefixes[$prefix];
         else
             throw new \Exception("Can't find name by prefix {$prefix}");
+    }
+
+    private static function getColumnByName(string $name) {
+        return strtolower($name) . '_id';
     }
 }
