@@ -35,7 +35,7 @@ class BlackList extends Model
         $blacklist_items = explode(', ', $blacklist);
 
         // массив для будущего инсерта
-        $blacklist_insert = array();
+        $blacklist_insert = [];
 
         // шаблон для записи в бд
         $blacklist_template = ['advertiser_id' => $advertiser_id];
@@ -43,9 +43,10 @@ class BlackList extends Model
             $blacklist_template[self::getColumnByName($el_params['name'])] = null;
         }
 
+        // обходим каждый элемент из переданного блэклиста
         foreach($blacklist_items as $key => $item) {
-            // проверяем соответствие формату
-            if(preg_match('#(' . implode('|', array_keys(self::$elements)) . ')(\d+)$#', $item, $matches)) {
+            // проверяем    соответствие формату
+            if(preg_match('#^(' . implode('|', array_keys(self::$elements)) . ')(\d+)$#', $item, $matches)) {
                 // прописываем шаблон записи в бд
                 $blacklist_insert[$key] = $blacklist_template;
 
