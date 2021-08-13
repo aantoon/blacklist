@@ -9,9 +9,15 @@ use App\Models\{Advertiser, Publisher, Site};
 class BlackList extends Model
 {
     use HasFactory;
-    private static $prefixes = [
-        's' => 'Site',
-        'p' => 'Publisher'
+    private static $elements = [
+        's' => [
+            'name' => 'Site',
+            'class' => Site::class,
+        ],
+        'p' => [
+            'name' => 'Publisher',
+            'class' => Publisher::class
+        ]
     ];
 
 
@@ -31,29 +37,27 @@ class BlackList extends Model
         // массив для будущего инсерта
         $blacklist_insert = array();
 
+        // шаблон для записи в бд
+        $blacklist_template = ['advertiser_id' => $advertiser_id];
+        foreach(self::$elements as $el_params) {
+            $blacklist_template[self::getColumnByName($el_params['name'])] = null;
+        }
+
         foreach($blacklist_items as $key => $item) {
-            // соответствие формату
-            if(preg_match('#(p|s)(\d+)#', $item, $matches)) {
-                $blacklist_insert[$key] = [
-                    'advertiser_id' => $advertiser_id,
-                    'publisher_id' => null,
-                    'site_id' => null
-                ];
+            // проверяем соответствие формату
+            if(preg_match('#(' . implode('|', array_keys(self::$elements)) . ')(\d+)$#', $item, $matches)) {
+                // прописываем шаблон записи в бд
+                $blacklist_insert[$key] = $blacklist_template;
 
-                $name = self::getNameByPrefix($matches[1]);
-                $class = "App\Models\\{$name}";
+                $el_name = self::$elements[$matches[1]]['name'];
+                $el_class = self::$elements[$matches[1]]['class'];
+                $el_id = $matches[2];
 
-                $id = $matches[2];
+                // ищем запись по айдишнику, она должна существовать
+                if(!$el_class::find($el_id))
+                    throw new \Exception("{$el_name} not found");
 
-                // у каждой сущности должен быть класс
-                if(!class_exists($class))
-                    throw new \Exception("Class {$name} is not defined");
-
-                // ищем запись по айдишнику
-                if(!$class::find($id))
-                    throw new \Exception("{$name} not found");
-
-                $blacklist_insert[$key][self::getColumnByName($name)] = $id;
+                $blacklist_insert[$key][self::getColumnByName($el_name)] = $el_id;
             }
             else
                 throw new \Exception('Blacklist is not valid');
@@ -75,9 +79,9 @@ class BlackList extends Model
             // обходим каждую запись из блэклиста адверта
             foreach($advert->blacklists as $blacklist) {
                 // обходим каждую доступную сущность
-                foreach(self::$prefixes as $prefix => $name) {
+                foreach(self::$elements as $prefix => $el_params) {
                     // ищем к какой сущности относится запись
-                    if($id = ($blacklist[self::getColumnByName($name)])) {
+                    if($id = ($blacklist[self::getColumnByName($el_params['name'])])) {
                         // добавляем в массив
                         $blacklist_array[] = "{$prefix}{$id}";
                     }
@@ -98,8 +102,8 @@ class BlackList extends Model
      * @return string
      */
     private static function getNameByPrefix(string $prefix) {
-        if(isset(self::$prefixes[$prefix]))
-            return self::$prefixes[$prefix];
+        if(isset(self::$elements[$prefix]))
+            return self::$elements[$prefix]['name'];
         else
             throw new \Exception("Can't find name by prefix {$prefix}");
     }
