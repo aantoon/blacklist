@@ -45,8 +45,9 @@ class BlackList extends Model
 
         // обходим каждый элемент из переданного блэклиста
         foreach($blacklist_items as $key => $item) {
-            // проверяем    соответствие формату
-            if(preg_match('#^(' . implode('|', array_keys(self::$elements)) . ')(\d+)$#', $item, $matches)) {
+            $list_of_prefixes = implode('|', array_keys(self::$elements));
+            // проверяем соответствие формату
+            if(preg_match("#^({$list_of_prefixes})(\d+)$#", $item, $matches)) {
                 // прописываем шаблон записи в бд
                 $blacklist_insert[$key] = $blacklist_template;
 
@@ -81,9 +82,9 @@ class BlackList extends Model
             foreach($advert->blacklists as $blacklist) {
                 // обходим каждую доступную сущность
                 foreach(self::$elements as $prefix => $el_params) {
-                    // ищем к какой сущности относится запись
+                    // ищем к какой относится запись
                     if($id = ($blacklist[self::getColumnByName($el_params['name'])])) {
-                        // добавляем в массив
+                        // нашли, добавляем в массив
                         $blacklist_array[] = "{$prefix}{$id}";
                     }
                 }
@@ -95,18 +96,6 @@ class BlackList extends Model
         }
         else
             throw new \Exception('Advertiser not found');
-    }
-
-    /**
-     * Ищет полное название сущности по префиксу
-     * @param string $prefix
-     * @return string
-     */
-    private static function getNameByPrefix(string $prefix) {
-        if(isset(self::$elements[$prefix]))
-            return self::$elements[$prefix]['name'];
-        else
-            throw new \Exception("Can't find name by prefix {$prefix}");
     }
 
     private static function getColumnByName(string $name) {
