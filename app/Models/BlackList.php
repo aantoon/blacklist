@@ -96,7 +96,7 @@ class BlackList extends Model
                 // обходим каждую доступную сущность
                 foreach(self::$elements as $prefix => $el_params) {
                     // ищем к какой относится запись
-                    if($id = ($blacklist[self::getColumnByName($el_params['name'])])) {
+                    if($id = ($blacklist[$el_params['column']])) {
                         // нашли, добавляем в массив
                         $blacklist_array[] = "{$prefix}{$id}";
                     }
@@ -109,9 +109,5 @@ class BlackList extends Model
         }
         else
             throw new \Exception('Advertiser not found');
-    }
-
-    private static function getColumnByName(string $name) {
-        return strtolower($name) . '_id';
     }
 }
