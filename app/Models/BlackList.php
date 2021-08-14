@@ -12,10 +12,12 @@ class BlackList extends Model
     private static $elements = [
         's' => [
             'name' => 'Site',
-            'class' => Site::class,
+            'column' => 'site_id',
+            'class' => Site::class
         ],
         'p' => [
             'name' => 'Publisher',
+            'column' => 'publisher_id',
             'class' => Publisher::class
         ]
     ];
@@ -34,35 +36,46 @@ class BlackList extends Model
         // разбиваем строку по формату
         $blacklist_items = explode(', ', $blacklist);
 
-        // массив для будущего инсерта
-        $blacklist_insert = [];
+        $allowed_prefixes = array_keys(self::$elements);
+        // массив для проверенных элементов блэклиста
+        $bl_valid = array_fill_keys($allowed_prefixes, []);
+        // массив для инсерта
+        $bl_insert = [];
+        $bl_insert_template = array_merge(['advertiser_id' => $advertiser_id],
+                                           array_fill_keys(array_column(self::$elements, 'column'), null));
+        // список префиксов для регулярки
+        $list_of_prefixes = implode('|', $allowed_prefixes);
 
-        // шаблон для записи в бд
-        $blacklist_template = ['advertiser_id' => $advertiser_id];
-        foreach(self::$elements as $el_params) {
-            $blacklist_template[self::getColumnByName($el_params['name'])] = null;
-        }
-
-        // обходим каждый элемент из переданного блэклиста
-        foreach($blacklist_items as $key => $item) {
-            $list_of_prefixes = implode('|', array_keys(self::$elements));
-            // проверяем соответствие формату
+        // проверяем соответствие формату
+        foreach($blacklist_items as $item) {
             if(preg_match("#^({$list_of_prefixes})(\d+)$#", $item, $matches)) {
-                // прописываем шаблон записи в бд
-                $blacklist_insert[$key] = $blacklist_template;
-
-                $el_name = self::$elements[$matches[1]]['name'];
-                $el_class = self::$elements[$matches[1]]['class'];
-                $el_id = $matches[2];
-
-                // ищем запись по айдишнику, она должна существовать
-                if(!$el_class::find($el_id))
-                    throw new \Exception("{$el_name} not found");
-
-                $blacklist_insert[$key][self::getColumnByName($el_name)] = $el_id;
+                $prefix = $matches[1];
+                $id = $matches[2];
+                // проверка на случай если в переданном блэк листе есть повторяющиеся айди
+                if(!in_array($id, $bl_valid[$prefix]))
+                    $bl_valid[$prefix][] = $id;
             }
             else
                 throw new \Exception('Blacklist is not valid');
+        }
+
+        // проверяем на существование записей в бд и формируем массив для инсерта
+        foreach(self::$elements as $prefix => $el_params) {
+            if(isset($bl_valid[$prefix])) {
+                // проверяем существуют ли записи в бд
+                $count_rows_exist = $el_params['class']::whereIn('id', $bl_valid[$prefix])->count();
+                if($count_rows_exist === count($bl_valid[$prefix])) {
+                    // всё ок, добавляем запись в массив для инсерта
+                    foreach($bl_valid[$prefix] as $id) {
+                        $temp_array = $bl_insert_template;
+                        $temp_array[$el_params['column']] = $id;
+
+                        $blacklist_insert[] = $temp_array;
+                    }
+                }
+                else
+                    throw new \Exception("{$el_params['name']} not found");
+            }
         }
 
         // сохраняем всё вместе

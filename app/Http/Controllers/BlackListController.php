@@ -31,13 +31,15 @@ class BlackListController extends Controller
 
         BlackList::saveFromString('p11, s12, p13, s13, s4, p3', 2);
         echo '<br>Парсим из строки "p11, s12, p13, s13, s4, p3" и сохраняем в бд адверту с айди 2';
-
-        dd([
+        /*
+        print_r([
             'BlackList::getForAdvertiser(1) Получаем блэклист из бд для адверта 1, и конвертим в строку' => BlackList::getForAdvertiser(1),
             'тоже самое для адверта 2' => BlackList::getForAdvertiser(2),
             'для адверта 3' =>  BlackList::getForAdvertiser(3),
             'адверты, которые добавили сайт с айди 4 в блэк лист' => Site::find(4)->advisersWhoAddedToBlackList,
             'адверты, которые добавили паблишер с айди 3 в блэк лист' => Publisher::find(3)->advisersWhoAddedToBlackList
-        ]);
+        ]);*/
+
+        return 's';
     }
 }

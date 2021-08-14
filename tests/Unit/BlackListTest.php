@@ -36,19 +36,25 @@ class BlackListTest extends TestCase
             }
         }
 
-        // полная строка для конечной проверки
-        $bl_full_list = implode(', ', $bl_list);
+        // полная массив для конечной проверки
+        $bl_in = $bl_list;
         // один элемент, будет добавлен отдельно
         $bl_one_el = array_shift($bl_list);
         // строка без элемента
         $bl_list = implode(', ', $bl_list);
 
-        // пробуем добавить список из нескольких элементов
-        $this->assertTrue(BlackList::saveFromString($bl_one_el, $advert->id));
         // пробуем добавить один элемент отдельно
+        $this->assertTrue(BlackList::saveFromString($bl_one_el, $advert->id));
+        // пробуем добавить список из нескольких элементов
         $this->assertTrue(BlackList::saveFromString($bl_list, $advert->id));
-        // пробуем получить полную строку блэк листа из бд
-        $this->assertEquals($bl_full_list, BlackList::getForAdvertiser($advert->id));
+        // получаем полную строку блэк листа из бд
+        $bl_out = BlackList::getForAdvertiser($advert->id);
+        // разбиваем на массив
+        $bl_out = explode(', ', $bl_out);
+        // сортируем оба массива, - стартовый и итоговый
+        sort($bl_in);
+        sort($bl_out);
+        $this->assertEquals($bl_in, $bl_out);
     }
 
     /**
